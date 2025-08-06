@@ -1,0 +1,33 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    environment:
+      name: ${{ github.ref_name == 'main' && 'production' || 'development' }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to GitHub Container Registry
+      run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+
+    - name: Build Docker image
+      run: |
+        IMAGE_TAG=${{ github.ref_name }}
+        docker build -t ghcr.io/${{ secrets.GHCR_USERNAME }}/separate-env-project:$IMAGE_TAG .
+
+    - name: Push Docker image to GHCR
+      run: |
+        IMAGE_TAG=${{ github.ref_name }}
+        docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/separate-env-project:$IMAGE_TAG
