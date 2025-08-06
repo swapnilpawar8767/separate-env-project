@@ -9,9 +9,6 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
-    env:
-      IMAGE_NAME: ghcr.io/${{ github.repository }}:dev
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,10 +21,10 @@ jobs:
           password: ${{ secrets.GHCR_PAT }}
 
       - name: Build Docker image
-        run: docker build -t $IMAGE_NAME .
+        run: docker build -t ghcr.io/${{ github.repository }}:dev .
 
       - name: Push Docker image to GHCR
-        run: docker push $IMAGE_NAME
+        run: docker push ghcr.io/${{ github.repository }}:dev
 
       - name: Deploy to Dev EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -42,5 +39,5 @@ jobs:
             docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} -p ${{ secrets.GHCR_PAT }}
             docker stop webapp || true
             docker rm webapp || true
-            docker pull $IMAGE_NAME
-            docker run -d --name webapp -p 80:80 $IMAGE_NAME
+            docker pull ghcr.io/${{ github.repository }}:dev
+            docker run -d --name webapp -p 80:80 ghcr.io/${{ github.repository }}:dev
