@@ -9,7 +9,7 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}:dev
 
 jobs:
-  build:
+  build-and-push:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
 
@@ -33,13 +33,11 @@ jobs:
   deploy:
     name: Deploy to Dev EC2
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-and-push
     environment:
-      name: development
-      
-
+      name: development   # 🔹 Here's the environment declaration
     steps:
-      - name: Deploy to EC2 via SSH
+      - name: Deploy to Dev EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_DEV_HOST }}
@@ -49,7 +47,7 @@ jobs:
           timeout: 30s
           command_timeout: 10m
           script: |
-            docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} -p ${{ secrets.GHCR_PAT }}
+            echo ${{ secrets.GHCR_PAT }} | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
             docker stop webapp || true
             docker rm webapp || true
             docker pull $IMAGE_NAME
