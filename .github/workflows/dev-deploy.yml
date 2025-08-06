@@ -1,0 +1,47 @@
+name: Dev CI/CD
+
+on:
+  push:
+    branches:
+      - dev
+
+env:
+  IMAGE_NAME: ghcr.io/${{ secrets.GHCR_USERNAME }}/separate-env-project
+
+jobs:
+  build-and-push-dev:
+    name: Build & Push Dev Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Log in to GHCR
+      run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+    - name: Build Docker Image
+      run: docker build -t $IMAGE_NAME:dev .
+
+    - name: Push Docker Image
+      run: docker push $IMAGE_NAME:dev
+
+  deploy-to-dev:
+    name: Deploy to Dev EC2
+    needs: build-and-push-dev
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+    - name: SSH and Deploy
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_DEV_HOST }}
+        username: ${{ secrets.EC2_SSH_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} -p ${{ secrets.GHCR_PAT }}
+          docker stop webapp || true
+          docker rm webapp || true
+          docker pull $IMAGE_NAME:dev
+          docker run -d --name webapp -p 80:80 $IMAGE_NAME:dev
