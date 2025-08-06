@@ -5,8 +5,12 @@ on:
     branches:
       - dev
 
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}:dev
+
 jobs:
-  build-and-deploy:
+  build:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
 
     steps:
@@ -21,12 +25,21 @@ jobs:
           password: ${{ secrets.GHCR_PAT }}
 
       - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository }}:dev .
+        run: docker build -t $IMAGE_NAME .
 
       - name: Push Docker image to GHCR
-        run: docker push ghcr.io/${{ github.repository }}:dev
+        run: docker push $IMAGE_NAME
 
-      - name: Deploy to Dev EC2 via SSH
+  deploy:
+    name: Deploy to Dev EC2
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: development
+      
+
+    steps:
+      - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_DEV_HOST }}
@@ -39,5 +52,5 @@ jobs:
             docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} -p ${{ secrets.GHCR_PAT }}
             docker stop webapp || true
             docker rm webapp || true
-            docker pull ghcr.io/${{ github.repository }}:dev
-            docker run -d --name webapp -p 80:80 ghcr.io/${{ github.repository }}:dev
+            docker pull $IMAGE_NAME
+            docker run -d --name webapp -p 80:80 $IMAGE_NAME
