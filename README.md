@@ -36,10 +36,13 @@ separate-env-project/
 >
 >        └── prod-deploy.yml
 >
-├── Dockerfile
-├── index.html
-├── style.css
-└── README.md
+>├── Dockerfile
+>
+>├── index.html
+>
+>├── style.css
+>
+>└── README.md
 
 ---
 
