@@ -30,8 +30,9 @@ The entire workflow is automated via GitHub Actions.
 separate-env-project/
 >
 >├── .github/workflows/
-│>        ├── dev-deploy.yml
-│>        └── prod-deploy.yml
+>        ├── dev-deploy.yml
+>
+>        └── prod-deploy.yml
 ├── Dockerfile
 ├── index.html
 ├── style.css
