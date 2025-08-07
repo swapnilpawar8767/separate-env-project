@@ -28,7 +28,8 @@ The entire workflow is automated via GitHub Actions.
 ## 📂 Project Structure
 
 separate-env-project/
-├── .github/
+>
+>├── .github/
 │ └── workflows/
 │ ├── dev-deploy.yml
 │ └── prod-deploy.yml
